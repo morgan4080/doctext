@@ -1,0 +1,7 @@
+openpyxl
+python-pptx
+beautifulsoup4
+pillow
+nltk
+flask
+python-docx

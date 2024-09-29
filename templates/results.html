@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <style>
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .progress {
+            height: 20px;
+            width: 0%;
+            background-color: green;
+            border-radius: 10px;
+        }
+
+        .status {
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body class="py-8">
+    <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        {% for data in extracted_data %}
+            <div>
+                <h1 class="text-2xl font-bold py-2 underline">File {{ loop.index0 + 1 }}</h1>
+                <section id="section-{{ loop.index0 }}" class="prose" style="max-width: 100% !important;">
+                    <h2 class="text-2xl font-bold tracking-tight text-gray-900">{{ data[0].rsplit('.', 1)[0] }}</h1>
+                    {% if data[1].paragraphs and data[1].paragraphs|length > 0 %}
+                        <div>
+                            {% for text in data[1].paragraphs %}
+                                {% if text.isupper() %}
+                                    <h3 class="text-xl font-semibold tracking-tight text-gray-900">{{ text }}</h2>
+                                {% else %}
+                                    <p>{{ text }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+            <div class="p-4 border rounded-md my-8">
+                {% if data[1].paragraphs and data[1].paragraphs|length > 0 %}
+                <!-- Progress bar and status for each section -->
+                <div class="progress-bar">
+                    <div id="progress-{{ loop.index0 }}" class="progress"></div>
+                </div>
+                <div id="status-{{ loop.index0 }}" class="status">Waiting for upload...</div>
+
+                <!-- Upload Button for each section -->
+                <button id="upload-button-{{ loop.index0 }}" type="button" class="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" onclick="uploadSection('{{ loop.index0 }}')">Upload Section</button>
+            {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        // Mock API URL
+        const apiUrl = "https://jsonplaceholder.typicode.com/posts";  // Use a mock API
+
+        // Function to upload section content as a string to the API
+        async function uploadSection(index) {
+            const section = document.getElementById(`section-${index}`);
+            const content = section.innerHTML;  // Convert the section HTML to a string
+
+            const progressBar = document.getElementById(`progress-${index}`);
+            const statusElement = document.getElementById(`status-${index}`);
+
+            try {
+                // Show progress at 30%
+                progressBar.style.width = '30%';
+
+                // Simulate a delay to mimic the upload time
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Perform the actual mock API call
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content }) // Send content as JSON string
+                });
+
+                // Show progress at 70%
+                progressBar.style.width = '70%';
+
+                if (response.ok) {
+                    // Show progress at 100%
+                    progressBar.style.width = '100%';
+
+                    // Update the status message
+                    statusElement.innerText = 'Upload Successful!';
+                    statusElement.style.color = 'green';
+                } else {
+                    throw new Error('Upload Failed');
+                }
+            } catch (error) {
+                // Handle errors and show failure status
+                statusElement.innerText = 'Upload Failed!';
+                statusElement.style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>
