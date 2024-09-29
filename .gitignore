@@ -1,2 +1,11 @@
-static/uploads
-docext
+# Ignore the static/uploads directory
+static/uploads/
+
+# Ignore virtual environment directories
+env/
+docext/
+
+# Optional: Ignore common temporary files (such as editor or OS-specific files)
+*.pyc
+__pycache__/
+.DS_Store

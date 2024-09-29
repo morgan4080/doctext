@@ -36,6 +36,9 @@
             margin-top: 20px;
         }
     </style>
+
+
+
 </head>
 <body class="py-8">
     <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -50,7 +53,7 @@
                                 {% if text.isupper() %}
                                     <h3 class="text-xl font-semibold tracking-tight text-gray-900">{{ text }}</h2>
                                 {% else %}
-                                    <p>{{ text }}</p>
+                                    <span>{{ text }}</span>
                                 {% endif %}
                             {% endfor %}
                         </div>
