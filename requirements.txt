@@ -5,3 +5,4 @@ pillow
 nltk
 flask
 python-docx
+gunicorn
