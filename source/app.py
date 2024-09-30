@@ -1,10 +1,15 @@
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash, send_from_directory
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
 
 app = Flask(__name__, template_folder='../templates')
 app.config.from_object(Config)
+
+
+@app.route('/robots.txt')
+def robots():
+    return send_from_directory('../static', 'robots.txt')
 
 @app.route('/docext/')
 def upload_form():
