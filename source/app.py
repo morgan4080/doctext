@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, redirect, flash
 from config.config import Config
-from file_handlers import save_file
-from extractors import extract_text_from_docx, extract_content_from_pptx
+from source.file_handlers import save_file
+from source.extractors import extract_text_from_docx, extract_content_from_pptx
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates')
 app.config.from_object(Config)
 
 @app.route('/')
