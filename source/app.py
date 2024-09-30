@@ -6,11 +6,11 @@ from source.extractors import extract_text_from_docx, extract_content_from_pptx
 app = Flask(__name__, template_folder='../templates')
 app.config.from_object(Config)
 
-@app.route('/')
+@app.route('/docext/')
 def upload_form():
     return render_template('upload.html')
 
-@app.route('/upload', methods=['POST'])
+@app.route('/docext/upload', methods=['POST'])
 def upload_files():
     if 'files[]' not in request.files:
         flash('No files selected')
