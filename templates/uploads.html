@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uploaded Files</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <style>
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .progress {
+            height: 20px;
+            width: 0%;
+            background-color: green;
+            border-radius: 10px;
+        }
+
+        .status {
+            margin-top: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-white px-4 py-12 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl">
+        <div class="grid grid-cols-2 items-center">
+            <div class="flex items-center min-w-0">
+                <h1 class="mt-3 text-2xl font-bold tracking-tight text-slate-900">Documents</h1>
+            </div>
+            <div class="ml-6 flex items-center justify-end">
+                <span id="currentCount">0</span>
+                <span>/</span>
+                <span id="totalCount">0</span>
+                <button type="button" class="block rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 ml-4" onclick="uploadAllSections()">Upload All<span class="sr-only">, Upload All</span></button>
+            </div>
+        </div>
+        <ul>
+            {% for file in files %}
+                {% if file.data.paragraphs and file.data.paragraphs|length > 0 %}
+                    <li class="flex flex-col gap-4 border shadow-md p-4 rounded-md my-8">
+                        <div class="flex items-center justify-between gap-x-6 py-5">
+                            <div class="min-w-0">
+                                <div class="flex items-start gap-x-3">
+                                <p class="text-sm font-semibold leading-6 text-gray-900 underline">{{ file.file_name }}</p>
+                                </div>
+                                <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
+                                <p class="whitespace-nowrap">Uploaded on <time datetime="{{ file.upload_date }}">{{ file.upload_date }}</time></p>
+                                </div>
+                            </div>
+                            <div class="flex flex-none items-center gap-x-4">
+                                <button type="button" class="hidden rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:block" onclick="uploadSection('{{ loop.index0 }}')">Upload Paper<span class="sr-only">, Upload Paper</span></button>
+                            </div>
+                        </div>
+                        <div class="p-4 mb-8">
+                            <div class="progress-bar">
+                                <div id="progress-{{ loop.index0 }}" class="progress"></div>
+                            </div>
+                            <div id="status-{{ loop.index0 }}" class="status">Waiting for upload...</div>
+                        </div>
+                        <div class="border rounded-md p-4 mb-8 max-h-48 overflow-y-scroll">
+                            <section id="section-{{ loop.index0 }}" class="prose" style="max-width: 100% !important;">
+                                <h2 id="section-title-{{ loop.index0 }}" class="text-2xl font-bold tracking-tight text-gray-900">{{ file.file_name.rsplit('.', 1)[0] }}</h2>
+                                <div>
+                                    {% for text in file.data.paragraphs %}
+                                        {% if text.isupper() %}
+                                            <h3 class="text-xl font-semibold tracking-tight text-gray-900">{{ text }}</h2>
+                                        {% else %}
+                                            <span>{{ text }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        </div>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        let currentUploadedPapers = 0;
+        // Mock API URL
+        const apiUrl = "https://jsonplaceholder.typicode.com/posts";  // Use a mock API
+
+        function slugify(title) {
+            return title
+              .toLowerCase()
+              .normalize('NFD')  // Normalize accented characters
+              .replace(/[\u0300-\u036f]/g, '')  // Remove diacritical marks
+              .trim()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-');
+        }
+          
+
+        // Function to upload section content as a string to the API
+        async function uploadSection(index) {
+            const section = document.getElementById(`section-${index}`);
+            const sectionTitle = document.getElementById(`section-title-${index}`);
+            const content = section.innerHTML;  // Convert the section HTML to a string
+            const title = sectionTitle.innerText;
+
+            const progressBar = document.getElementById(`progress-${index}`);
+            const statusElement = document.getElementById(`status-${index}`);
+            const currentCount = document.getElementById(`currentCount`);
+
+            try {
+                // Show progress at 30%
+                progressBar.style.width = '30%';
+
+                // Simulate a delay to mimic the upload time
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Perform the actual mock API call
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, slug: slugify(title), content }) // Send content as JSON string
+                });
+
+                // Show progress at 70%
+                progressBar.style.width = '70%';
+
+                if (response.ok) {
+                    // Show progress at 100%
+                    progressBar.style.width = '100%';
+
+                    // Update the status message
+                    statusElement.innerText = 'Upload Successful!';
+                    statusElement.style.color = 'green';
+                    currentUploadedPapers = currentUploadedPapers + 1;
+                    currentCount.innerText = currentUploadedPapers;
+                } else {
+                    throw new Error('Upload Failed');
+                }
+            } catch (error) {
+                // Handle errors and show failure status
+                statusElement.innerText = 'Upload Failed!';
+                statusElement.style.color = 'red';
+            }
+        }
+
+        async function uploadAllSections() {
+            const allSections = document.querySelectorAll('section');
+
+            const indexes = Array.from(allSections).reduce((acc, section) => {
+                // Extract the index from the section's id (assuming the id is in the format 'section-{index}')
+                const id = section.id;
+                const index = id.split('-')[1];  // Get the part after 'section-'
+                
+                // Add the index to the accumulator
+                acc.push(index);
+                
+                return acc;
+            }, []);
+
+            const totalCount = document.getElementById(`totalCount`);
+
+            totalCount.innerText = indexes.length;
+
+            Promise.all(indexes.map(index => uploadSection(index)))
+            .then((results) => {
+                // Handle successful uploads
+                console.log("All sections uploaded:");
+                console.log(results);  // Logs the success message for each section
+            })
+            .catch((error) => {
+                // Handle any error that occurred in one of the uploads
+                console.error("An error occurred:", error);
+            });
+        }
+    </script>
+</body>
+</html>

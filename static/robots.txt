@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /private
+Disallow: /admin
+Disallow: /user/settings
+Disallow: /docext/uploads
+Disallow: /docext/
+
+# Allow everything else
+Allow: /
