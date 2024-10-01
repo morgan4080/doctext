@@ -64,6 +64,7 @@
                         </div>
                         <div class="border rounded-md p-4 mb-8 max-h-48 overflow-y-scroll">
                             <section id="section-{{ loop.index0 }}" class="prose" style="max-width: 100% !important;">
+                                <div id="section-file-name-{{ loop.index0 }}" class="sr-only">{{ file.file_name }}</div>
                                 <h2 id="section-title-{{ loop.index0 }}" class="text-2xl font-bold tracking-tight text-gray-900">{{ file.file_name.rsplit('.', 1)[0] }}</h2>
                                 <article>
                                     {% for text in file.data.paragraphs %}
@@ -92,6 +93,61 @@
         let currentUploadedPapers = 0;
         // Mock API URL
         const apiUrl = "https://proctorowls.com/api/papers";  // Use a mock API
+
+        // Function to check if a section has already been uploaded (using _id)
+        function checkIfSectionUploaded(db, _id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['sections'], 'readonly');
+                const objectStore = transaction.objectStore('sections');
+                const request = objectStore.get(_id);
+
+                request.onsuccess = function (event) {
+                    resolve(event.target.result ? true : false);  // Returns true if found, false otherwise
+                };
+
+                request.onerror = function (event) {
+                    reject('Failed to retrieve record: ' + event.target.errorCode);
+                };
+            });
+        }
+
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('UploadSectionsDB', 1);
+                
+                // Handle database version upgrades (create object stores)
+                request.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+                    const objectStore = db.createObjectStore('sections', { keyPath: '_id' });
+                    objectStore.createIndex('file_name', 'file_name', { unique: false });
+                };
+        
+                request.onsuccess = function (event) {
+                    resolve(event.target.result);
+                };
+        
+                request.onerror = function (event) {
+                    reject('Database failed to open: ' + event.target.errorCode);
+                };
+            });
+        }
+
+        // Function to save the file_name and _id to IndexedDB
+        function saveSectionToDB(db, section) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['sections'], 'readwrite');
+                const objectStore = transaction.objectStore('sections');
+                const request = objectStore.add(section);
+
+                request.onsuccess = function () {
+                    resolve('Section saved to IndexedDB');
+                };
+
+                request.onerror = function (event) {
+                    reject('Failed to save section: ' + event.target.errorCode);
+                };
+            });
+        }
 
         function slugify(title) {
             return title
@@ -136,12 +192,24 @@
             const statusElement = document.getElementById(`status-${index}`);
             const currentCount = document.getElementById(`currentCount`);
 
+            const fileNameElement = document.getElementById(`section-file-name-${index}`);
+            const file_name = fileNameElement.innerText;
+
             try {
+                // Open the IndexedDB database
+                const db = await openDatabase();
+
+                // Check if the section has already been uploaded
+                const isUploaded = await checkIfSectionUploaded(db, file_name);
+                
+                if (isUploaded) {
+                    console.log(`Section ${index} has already been uploaded`);
+                    statusElement.innerText = 'Already Uploaded!';
+                    statusElement.style.color = 'blue';
+                    return;
+                }
                 // Show progress at 30%
                 progressBar.style.width = '30%';
-
-                // Simulate a delay to mimic the upload time
-                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // Perform the actual mock API call
                 const response = await fetch(apiUrl, {
@@ -161,9 +229,13 @@
                 progressBar.style.width = '70%';
 
                 if (response.ok) {
+                    const { data } = await response.json();
+                    const _id = data._id;  // Assuming the API returns an _id field
                     // Show progress at 100%
                     progressBar.style.width = '100%';
 
+                    // Save the file_name and _id to IndexedDB
+                    await saveSectionToDB(db, { _id, file_name });
                     // Update the status message
                     statusElement.innerText = 'Upload Successful!';
                     statusElement.style.color = 'green';
@@ -174,6 +246,7 @@
                 }
             } catch (error) {
                 // Handle errors and show failure status
+                console.log(error)
                 statusElement.innerText = 'Upload Failed!';
                 statusElement.style.color = 'red';
             }
