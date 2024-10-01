@@ -65,15 +65,21 @@
                         <div class="border rounded-md p-4 mb-8 max-h-48 overflow-y-scroll">
                             <section id="section-{{ loop.index0 }}" class="prose" style="max-width: 100% !important;">
                                 <h2 id="section-title-{{ loop.index0 }}" class="text-2xl font-bold tracking-tight text-gray-900">{{ file.file_name.rsplit('.', 1)[0] }}</h2>
-                                <div>
+                                <article>
                                     {% for text in file.data.paragraphs %}
                                         {% if text.isupper() %}
                                             <h3 class="text-xl font-semibold tracking-tight text-gray-900">{{ text }}</h2>
                                         {% else %}
-                                            <span>{{ text }}</span>
+                                            {% if text|length < 100 %}
+                                                <h5 class="text-lg font-medium tracking-tight text-gray-800">{{ text }}</h5>
+                                            {% else %}
+                                                <div id="section-span-{{ loop.index0 }}">
+                                                    <span>{{ text }}</span>
+                                                </div>
+                                            {% endif %}
                                         {% endif %}
                                     {% endfor %}
-                                </div>
+                                </article>
                             </section>
                         </div>
                     </li>
@@ -85,7 +91,7 @@
     <script>
         let currentUploadedPapers = 0;
         // Mock API URL
-        const apiUrl = "https://jsonplaceholder.typicode.com/posts";  // Use a mock API
+        const apiUrl = "https://proctorowls.com/api/papers";  // Use a mock API
 
         function slugify(title) {
             return title
@@ -97,13 +103,33 @@
               .replace(/\s+/g, '-')
               .replace(/-+/g, '-');
         }
+
+        function createExcerpt(elementId, maxLength = 100) {
+            // Get the HTML element (e.g., div, p, or any container holding the description)
+            const element = document.getElementById(elementId);
+            
+            if (element) {
+                // Extract the text content from the element
+                let textContent = element.textContent || element.innerText;
+        
+                // Trim the text to the specified maxLength, adding ellipsis if needed
+                if (textContent.length > maxLength) {
+                    textContent = textContent.substring(0, maxLength).trim() + '...';
+                }
+        
+                return textContent;
+            }
+        
+            // Return an empty string if the element does not exist
+            return '';
+        }
           
 
         // Function to upload section content as a string to the API
         async function uploadSection(index) {
             const section = document.getElementById(`section-${index}`);
             const sectionTitle = document.getElementById(`section-title-${index}`);
-            const content = section.innerHTML;  // Convert the section HTML to a string
+            const description = section.innerHTML;  // Convert the section HTML to a string
             const title = sectionTitle.innerText;
 
             const progressBar = document.getElementById(`progress-${index}`);
@@ -123,7 +149,12 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ title, slug: slugify(title), content }) // Send content as JSON string
+                    body: JSON.stringify({ 
+                        title,
+                        slug: slugify(title),
+                        excerpt: createExcerpt(`section-span-${index}`),
+                        description
+                    }) // Send content as JSON string
                 });
 
                 // Show progress at 70%
