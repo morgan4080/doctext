@@ -95,16 +95,17 @@
         const apiUrl = "https://proctorowls.com/api/papers";  // Use a mock API
 
         // Function to check if a section has already been uploaded (using _id)
-        function checkIfSectionUploaded(db, _id) {
+        function checkIfSectionUploaded(db, file_name) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction(['sections'], 'readonly');
                 const objectStore = transaction.objectStore('sections');
-                const request = objectStore.get(_id);
-
+                const index = objectStore.index('file_name'); // Use the file_name index
+                const request = index.get(file_name); // Query by file_name
+        
                 request.onsuccess = function (event) {
                     resolve(event.target.result ? true : false);  // Returns true if found, false otherwise
                 };
-
+        
                 request.onerror = function (event) {
                     reject('Failed to retrieve record: ' + event.target.errorCode);
                 };
