@@ -18,6 +18,7 @@ def calculate_discount(order_id):
 def get_order(order_id):
     try:
         url = f'{API_URL}/getOrders/{order_id}'
+        print(f"Get Order URL {url}")
         response = requests.get(url)
 
         if response.status_code == 200:
