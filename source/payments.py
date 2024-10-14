@@ -7,7 +7,7 @@ load_dotenv()
 API_URL = os.getenv('API_URL')
 
 def calculate_discount(order_id):
-    print(f"Calculate discount{order_id}")
+    print(f"Calculate discount {order_id} {API_URL}")
     discount = {
         "code": "N/A",
         "amount": 0.00
@@ -24,6 +24,7 @@ def get_order(order_id):
         if response.status_code == 200:
             order_data = response.json()
         else:
+            print(f"Failed to fetch order. Status code: {url} {response.status_code}")
             order_data = {"error": f"Failed to fetch order. Status code: {response.status_code}"}
 
     except requests.exceptions.RequestException as e:
