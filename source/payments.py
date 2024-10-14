@@ -45,4 +45,4 @@ def get_order(order_id, session_token):
 
 def calculate_order_amount(order_id, session_token):
     order_data=get_order(order_id, session_token)
-    return order_data.get('totalPrice', 0)
+    return order_data.get('totalPrice', 1)

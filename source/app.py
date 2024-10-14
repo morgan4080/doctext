@@ -92,8 +92,9 @@ def create_payment():
         session_token = request.cookies.get('next-auth.session-token')
         data = json.loads(request.data)
         amount = calculate_order_amount(data["id"], session_token)
+        amount_in_cents = int(amount * 100)
         intent = stripe.PaymentIntent.create(
-            amount=amount,
+            amount=amount_in_cents,
             currency='usd',
             automatic_payment_methods={
                 'enabled': True,
