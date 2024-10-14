@@ -426,7 +426,7 @@
               credentials: 'include',
               body: JSON.stringify({ id: document.getElementById("orderId").innerText }),
           });
-          const { clientSecret, dpmCheckerLink } = await response.json();
+          const { clientSecret } = await response.json();
 
           const appearance = {
               theme: 'stripe',
