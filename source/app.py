@@ -1,13 +1,20 @@
 import os
 import datetime
-from flask import Flask, render_template, request, redirect, flash, send_from_directory, url_for
+import stripe
+import json
+from flask import Flask, render_template, request, redirect, flash, send_from_directory, url_for, jsonify
+from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
+from source.payments import calculate_discount, get_order, calculate_order_amount
+
+load_dotenv()
 
 app = Flask(__name__, template_folder='../templates')
 app.config.from_object(Config)
 
+stripe.api_key = os.getenv('SECRET_KEY_STRP')
 
 @app.route('/robots.txt')
 def robots():
@@ -16,6 +23,14 @@ def robots():
 @app.route('/sitemap.xml')
 def sitemap():
     return send_from_directory('../static', 'sitemap.xml')
+
+@app.route('/checkout/complete/<order_id>')
+def checkout_complete(order_id):
+    return render_template('complete.html', order=get_order(order_id), discount=calculate_discount(order_id))
+
+@app.route('/checkout/<order_id>')
+def checkout_form(order_id):
+    return render_template('checkout_form.html', order=get_order(order_id), discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'))
 
 @app.route('/docext/')
 def upload_form():
@@ -38,12 +53,10 @@ def upload_files():
     
     return redirect(url_for('list_uploaded_files'))
 
-# Route to display all uploaded files
 @app.route('/docext/uploads')
 def list_uploaded_files():
     try:
         extracted_data = []
-        # List all files in the upload directory
         files = os.listdir(app.config['UPLOAD_FOLDER'])
 
         if not files:
@@ -52,7 +65,6 @@ def list_uploaded_files():
         for file in files:
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file)
             if os.path.isfile(file_path):
-                # Determine the file type and extract data
                 if file.endswith('.docx'):
                     data = extract_text_from_docx(file_path)
                 elif file.endswith('.pptx'):
@@ -60,7 +72,6 @@ def list_uploaded_files():
                 else:
                     data = "Unsupported file type"
 
-                # Create a dictionary with file name, upload date, and extracted data
                 upload_info = {
                     'file_name': file,
                     'upload_date': datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d %H:%M:%S'),
@@ -69,10 +80,30 @@ def list_uploaded_files():
 
                 extracted_data.append(upload_info)
 
-        # Pass the list of dictionaries (file_name, upload_date, data) to the template
         return render_template('uploads.html', files=extracted_data)
     except Exception as e:
         return str(e)
+
+@app.route('/create-payment-intent', methods=['POST'])
+def create_payment():
+    try:
+        data = json.loads(request.data)
+        amount = calculate_order_amount(data)
+        print(amount)
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency='usd',
+            automatic_payment_methods={
+                'enabled': True,
+            },
+        )
+        return jsonify({
+            'clientSecret': intent['client_secret'],
+            # [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
+            'dpmCheckerLink': 'https://dashboard.stripe.com/settings/payment_methods/review?transaction_id={}'.format(intent['id']),
+        })
+    except Exception as e:
+        return jsonify(error=str(e)), 403
 
 
 if __name__ == "__main__":

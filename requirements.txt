@@ -6,3 +6,5 @@ nltk
 flask
 python-docx
 gunicorn
+stripe
+python-dotenv
