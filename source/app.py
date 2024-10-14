@@ -101,9 +101,9 @@ def create_payment():
             },
         )
         return jsonify({
-            'clientSecret': intent['client_secret'],
+            'clientSecret': intent['client_secret']
             # [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
-            'dpmCheckerLink': 'https://dashboard.stripe.com/settings/payment_methods/review?transaction_id={}'.format(intent['id']),
+            # 'dpmCheckerLink': 'https://dashboard.stripe.com/settings/payment_methods/review?transaction_id={}'.format(intent['id']),
         })
     except Exception as e:
         return jsonify(error=str(e)), 403
