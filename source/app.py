@@ -26,11 +26,13 @@ def sitemap():
 
 @app.route('/checkout/complete/<order_id>')
 def checkout_complete(order_id):
-    return render_template('complete.html', order=get_order(order_id), discount=calculate_discount(order_id))
+    session_token = request.cookies.get('next-auth.session-token')
+    return render_template('complete.html', order=get_order(order_id, session_token), discount=calculate_discount(order_id))
 
 @app.route('/checkout/<order_id>')
 def checkout_form(order_id):
-    return render_template('checkout_form.html', order=get_order(order_id), discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'))
+    session_token = request.cookies.get('next-auth.session-token')
+    return render_template('checkout_form.html', order=get_order(order_id, session_token), discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
 
 @app.route('/docext/')
 def upload_form():
@@ -87,9 +89,9 @@ def list_uploaded_files():
 @app.route('/create-payment-intent', methods=['POST'])
 def create_payment():
     try:
+        session_token = request.cookies.get('next-auth.session-token')
         data = json.loads(request.data)
-        amount = calculate_order_amount(data)
-        print(amount)
+        amount = calculate_order_amount(data["id"], session_token)
         intent = stripe.PaymentIntent.create(
             amount=amount,
             currency='usd',

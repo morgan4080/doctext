@@ -408,7 +408,7 @@
     </script>
     <script>
         // This is your test publishable API key.
-        const stripe = Stripe(document.getElementById("publishable"));
+        const stripe = Stripe(document.getElementById("publishable").innerText);
 
         let elements;
 
@@ -423,6 +423,7 @@
           const response = await fetch("/create-payment-intent", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: 'include',
               body: JSON.stringify({ id: document.getElementById("orderId").innerText }),
           });
           const { clientSecret, dpmCheckerLink } = await response.json();

@@ -15,11 +15,22 @@ def calculate_discount(order_id):
 
     return discount
 
-def get_order(order_id):
+def get_order(order_id, session_token):
     try:
+        print(f"Session Token {session_token}")
         url = f'{API_URL}/getOrders/{order_id}'
-        print(f"Get Order URL {url}")
-        response = requests.get(url)
+
+        if session_token:
+            headers = {
+                'Cookie': 'next-auth.session-token='+session_token
+            }
+        else:
+            headers = {
+                'Cookie': 'next-auth.session-token='+os.getenv('SESSION_TOKEN')
+            }
+
+        response = requests.request("GET", url, headers=headers)
+
 
         if response.status_code == 200:
             order_data = response.json()
@@ -32,6 +43,6 @@ def get_order(order_id):
 
     return order_data
 
-def calculate_order_amount(order_id):
-    order_data=get_order(order_id)
+def calculate_order_amount(order_id, session_token):
+    order_data=get_order(order_id, session_token)
     return order_data.get('totalPrice', 0)
