@@ -26,7 +26,7 @@ def get_order(order_id, session_token):
             }
         else:
             headers = {
-                'Cookie': 'next-auth.session-token='+os.getenv('SESSION_TOKEN')
+                'Cookie': 'next-auth.session-token='
             }
 
         response = requests.request("GET", url, headers=headers)
