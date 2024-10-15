@@ -15,6 +15,7 @@ app = Flask(__name__, template_folder='../templates')
 app.config.from_object(Config)
 
 stripe.api_key = os.getenv('SECRET_KEY_STRP')
+WEBHOOK_SCRT = os.getenv('STRP_WEBHOOK_SCRT')
 
 @app.route('/robots.txt')
 def robots():
@@ -108,6 +109,41 @@ def create_payment():
     except Exception as e:
         return jsonify(error=str(e)), 403
 
+@app.route('/checkout/hook', methods=['POST'])
+def stripe_webhook():
+    # Get the webhook data from the request
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+
+    try:
+        # Verify the webhook signature using Stripe library
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, WEBHOOK_SCRT
+        )
+    except ValueError as e:
+        # Invalid payload
+        print(f"Invalid payload: {e}")
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        print(f"Signature verification failed: {e}")
+        return jsonify({'error': 'Invalid signature'}), 400
+
+    # Handle the event based on its type
+    event_type = event['type']
+    data = event['data']['object']
+
+    if event_type == 'payment_intent.succeeded':
+        print(f"Payment for {data['amount']} succeeded.")
+        # Process the payment (e.g., update order status in your database)
+    elif event_type == 'payment_intent.payment_failed':
+        print(f"Payment for {data['amount']} failed.")
+        # Handle the failure (e.g., notify the user)
+    else:
+        print(f"Unhandled event type: {event_type}")
+
+    # Respond to Stripe with a 200 status to acknowledge receipt
+    return jsonify({'status': 'success'}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
