@@ -17,7 +17,6 @@ def calculate_discount(order_id):
 
 def get_order(order_id, session_token):
     try:
-        print(f"Session Token {session_token}")
         url = f'{API_URL}/getOrders/{order_id}'
 
         if session_token:
