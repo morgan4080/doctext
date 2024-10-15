@@ -2,6 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 load_dotenv()
 
@@ -174,14 +175,21 @@ def create_order_session(order_id, session_token):
         print(f"Error creating/updating order session: {e}")
         return {'success': False, 'message': str(e)}
 
-# Function to look up the session token by order_id
-def get_session_token_by_order_id(order_id):
+def get_session_token_by_order_id(order_id: str) -> str:
     try:
-        session = order_session_collection.find_one({'order_id': order_id})
-        if session:
-            return session.get('session_token')
+        # Convert order_id to ObjectId
+        object_id = ObjectId(order_id)
+
+        # Query the collection for the document with the specified _id
+        session_data = order_session_collection.find_one({"_id": object_id})
+
+        # Check if the document exists and return the session token
+        if session_data and 'session_token' in session_data:
+            return session_data['session_token']
         else:
-            return None
+            print("session_token not in session_data")
+            return ''  # Return None if no session is found
+
     except Exception as e:
         print(f"Error retrieving session token: {e}")
-        return None
+        return str(e)  # Return None in case of error

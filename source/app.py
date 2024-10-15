@@ -152,8 +152,8 @@ def stripe_webhook():
         else:
             user = session_data.get('user', {})
 
-            username = user.get('name', 'webhook username')
-            user_id = user.get('_id', '00000')
+            username = user.get('name')
+            user_id = user.get('_id')
 
             print({'transactionid': data['id'], 'amount': cents_to_dollars(data['amount']), 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
 
