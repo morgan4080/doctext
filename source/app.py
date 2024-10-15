@@ -33,7 +33,9 @@ def checkout_complete(order_id):
 @app.route('/checkout/<order_id>')
 def checkout_form(order_id):
     session_token = request.cookies.get('next-auth.session-token')
-    return render_template('checkout_form.html', order=get_order(order_id, session_token), discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
+    order_data = get_order(order_id, session_token)
+    print(order_data)
+    return render_template('checkout_form.html', order=order_data, discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
 
 @app.route('/docext/')
 def upload_form():
