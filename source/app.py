@@ -141,16 +141,20 @@ def stripe_webhook():
         session_token = data['metadata'].get('session_token')
 
         session_data = get_user(session_token)
-        user = session_data.get('user', {})
+        
+        if session_data.error:
+            print(f"ERROR getting user session data: {session_data.error}")
+        else:
+            user = session_data.get('user', {})
 
-        username = user.get('name', 'webhook username')
-        user_id = user.get('_id', '00000')
+            username = user.get('name', 'webhook username')
+            user_id = user.get('_id', '00000')
 
-        print({'transactionid': data['id'], 'amount': data['amount']/100, 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
+            print({'transactionid': data['id'], 'amount': data['amount']/100, 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
 
-        update_payment_status(order_id, session_token)
+            update_payment_status(order_id, session_token)
 
-        create_transaction(data['id'], data['amount']/100, username, user_id, data['currency'], order_id, session_token)
+            create_transaction(data['id'], data['amount']/100, username, user_id, data['currency'], order_id, session_token)
     
     elif event_type == 'payment_intent.payment_failed':
         print(f"Payment for {data['amount']} failed.")
