@@ -2,7 +2,6 @@ import requests
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from bson.objectid import ObjectId
 
 load_dotenv()
 
@@ -177,11 +176,8 @@ def create_order_session(order_id, session_token):
 
 def get_session_token_by_order_id(order_id: str) -> str:
     try:
-        # Convert order_id to ObjectId
-        object_id = ObjectId(order_id)
-
         # Query the collection for the document with the specified _id
-        session_data = order_session_collection.find_one({"_id": object_id})
+        session_data = order_session_collection.find_one({"_id": order_id})
 
         # Check if the document exists and return the session token
         if session_data and 'session_token' in session_data:

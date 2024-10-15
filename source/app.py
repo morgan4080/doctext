@@ -35,6 +35,7 @@ def checkout_complete(order_id):
 def checkout_form(order_id):
     session_token = request.cookies.get('next-auth.session-token')
     order_data = get_order(order_id, session_token)
+    print(get_session_token_by_order_id(order_id))
     return render_template('checkout_form.html', order=order_data, discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
 
 @app.route('/docext/')
