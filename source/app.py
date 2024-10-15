@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
-from source.payments import calculate_discount, get_order, calculate_order_amount
+from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction
 
 load_dotenv()
 
@@ -100,6 +100,7 @@ def create_payment():
             automatic_payment_methods={
                 'enabled': True,
             },
+            metadata={'orderId': data["id"],'session_token': session_token},
         )
         return jsonify({
             'clientSecret': intent['client_secret']
@@ -136,6 +137,21 @@ def stripe_webhook():
     if event_type == 'payment_intent.succeeded':
         print(f"Payment for {data['amount']} succeeded.")
         # Process the payment (e.g., update order status in your database)
+        order_id = data['metadata'].get('orderId')
+        session_token = data['metadata'].get('session_token')
+
+        session_data = get_user(session_token)
+        user = session_data.get('user', {})
+
+        username = user.get('name', 'webhook username')
+        user_id = user.get('_id', '00000')
+
+        print({'transactionid': data['id'], 'amount': data['amount']/100, 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
+
+        update_payment_status(order_id, session_token)
+
+        create_transaction(data['id'], data['amount']/100, username, user_id, data['currency'], order_id, session_token)
+    
     elif event_type == 'payment_intent.payment_failed':
         print(f"Payment for {data['amount']} failed.")
         # Handle the failure (e.g., notify the user)
