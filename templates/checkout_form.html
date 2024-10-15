@@ -296,7 +296,12 @@
           <h2 id="payment-heading" class="sr-only">Payment and shipping details</h2>
       
           <div class="mx-auto max-w-lg lg:pt-16">
-            <div class="flex flex-col justify-center items-center overflow-hidden w-full">
+            <div class="w-full">
+              <img src="/logo.svg" class="mx-auto w-16 h-auto" alt="PROCTOR OWLS LOGO">
+              <h3 class="mt-6 text-center text-base font-semibold leading-7 text-gray-900">PROCTOR OWLS ™</h3>
+            </div>
+            
+            <div class="mt-8 flex flex-col justify-center items-center overflow-hidden w-full">
                 <div id="paypal-button-container" class="w-full hidden"></div>
             </button>
       
@@ -328,12 +333,12 @@
                 <span id="button-text">Pay now</span>
               </button>
       
-              <p id="payment-message"  class="mt-6 flex justify-center text-sm font-medium text-gray-500">
+              <div  class="mt-6 flex justify-center text-sm font-medium text-gray-500">
                 <svg class="mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-slot="icon">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"></path>
                 </svg>
-                Payment details stored in plain text
-              </p>
+                <span id="payment-message">Messages will be displayed here.</span>
+              </div>
             </form>
              <!-- [DEV]: For demo purposes only, display dynamic payment methods annotation and integration checker 
             <div id="dpm-annotation" class="mt-6 w-3/4 text-xs text-center italic">
