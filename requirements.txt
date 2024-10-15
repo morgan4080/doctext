@@ -8,3 +8,4 @@ python-docx
 gunicorn
 stripe
 python-dotenv
+pymongo

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
-from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction
+from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id
 
 load_dotenv()
 
@@ -94,13 +94,14 @@ def create_payment():
         data = json.loads(request.data)
         amount = calculate_order_amount(data["id"], session_token)
         amount_in_cents = int(amount * 100)
+        create_order_session(data["id"], session_token)
         intent = stripe.PaymentIntent.create(
             amount=amount_in_cents,
             currency='usd',
             automatic_payment_methods={
                 'enabled': True,
             },
-            metadata={'orderId': data["id"],'session_token': session_token},
+            metadata={'orderId': data["id"]},
         )
         return jsonify({
             'clientSecret': intent['client_secret']
@@ -138,7 +139,7 @@ def stripe_webhook():
         print(f"Payment for {data['amount']} succeeded.")
         # Process the payment (e.g., update order status in your database)
         order_id = data['metadata'].get('orderId')
-        session_token = data['metadata'].get('session_token')
+        session_token = get_session_token_by_order_id(order_id)
 
         print(f"Metadata Order ID: {order_id}, Session Token: {session_token}")
 

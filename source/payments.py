@@ -1,10 +1,16 @@
 import requests
 import os
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 
 API_URL = os.getenv('API_URL')
+MONGODB_URI = os.getenv('MONGODB_URI')
+
+client = MongoClient(MONGODB_URI)
+db = client['proctor'] 
+order_session_collection = db['order_session']
 
 def calculate_discount(order_id):
     discount = {
@@ -133,3 +139,29 @@ def create_transaction(transaction_id, amount, username, user_id, currency, orde
 def calculate_order_amount(order_id, session_token):
     order_data=get_order(order_id, session_token)
     return order_data.get('totalPrice', 1)
+
+# Function to create an entry in the 'order_session' collection
+def create_order_session(order_id, session_token):
+    try:
+        order_session = {
+            'order_id': order_id,
+            'session_token': session_token
+        }
+        result = order_session_collection.insert_one(order_session)
+        print(f"Order session created with ID: {result.inserted_id}")
+        return {'success': True, 'message': 'Order session created successfully'}
+    except Exception as e:
+        print(f"Error creating order session: {e}")
+        return {'success': False, 'message': str(e)}
+
+# Function to look up the session token by order_id
+def get_session_token_by_order_id(order_id):
+    try:
+        session = order_session_collection.find_one({'order_id': order_id})
+        if session:
+            return session.get('session_token')
+        else:
+            return None
+    except Exception as e:
+        print(f"Error retrieving session token: {e}")
+        return None
