@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
-from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id
+from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars
 
 load_dotenv()
 
@@ -93,7 +93,7 @@ def create_payment():
         session_token = request.cookies.get('next-auth.session-token')
         data = json.loads(request.data)
         amount = calculate_order_amount(data["id"], session_token)
-        amount_in_cents = int(amount * 100)
+        amount_in_cents = dollars_to_cents(amount)
         create_order_session(data["id"], session_token)
         intent = stripe.PaymentIntent.create(
             amount=amount_in_cents,
@@ -153,11 +153,11 @@ def stripe_webhook():
             username = user.get('name', 'webhook username')
             user_id = user.get('_id', '00000')
 
-            print({'transactionid': data['id'], 'amount': data['amount']/100, 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
+            print({'transactionid': data['id'], 'amount': cents_to_dollars(data['amount']), 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
 
             update_payment_status(order_id, session_token)
 
-            create_transaction(data['id'], data['amount']/100, username, user_id, data['currency'], order_id, session_token)
+            create_transaction(data['id'], cents_to_dollars(data['amount']), username, user_id, data['currency'], order_id, session_token)
     
     elif event_type == 'payment_intent.payment_failed':
         print(f"Payment for {data['amount']} failed.")

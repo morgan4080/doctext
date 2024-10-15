@@ -12,6 +12,18 @@ client = MongoClient(MONGODB_URI)
 db = client['proctor'] 
 order_session_collection = db['order_session']
 
+def dollars_to_cents(dollars):
+    """Convert dollars to cents."""
+    if dollars < 0:
+        raise ValueError("Amount cannot be negative.")
+    return int(round(dollars * 100))
+
+def cents_to_dollars(cents):
+    """Convert cents to dollars."""
+    if cents < 0:
+        raise ValueError("Amount cannot be negative.")
+    return round(cents / 100, 2)
+
 def calculate_discount(order_id):
     discount = {
         "code": "N/A",
