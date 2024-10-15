@@ -147,7 +147,7 @@ def stripe_webhook():
 
         session_data = get_user(session_token)
 
-        if session_data.error:
+        if 'error' in session_data and session_data['error'] is not None:
             print(f"ERROR getting user session data: {session_data.error}")
         else:
             user = session_data.get('user', {})
