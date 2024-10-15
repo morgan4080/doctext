@@ -140,8 +140,10 @@ def stripe_webhook():
         order_id = data['metadata'].get('orderId')
         session_token = data['metadata'].get('session_token')
 
+        print(f"Metadata Order ID: {order_id}, Session Token: {session_token}")
+
         session_data = get_user(session_token)
-        
+
         if session_data.error:
             print(f"ERROR getting user session data: {session_data.error}")
         else:
