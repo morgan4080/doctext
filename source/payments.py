@@ -24,6 +24,10 @@ def cents_to_dollars(cents):
         raise ValueError("Amount cannot be negative.")
     return round(cents / 100, 2)
 
+def initial_draft_pricing(apply, p):
+        """Apply 10% extra if initial draft is requested."""
+        return p * 0.1 if apply else 0.0
+
 def calculate_order_price(data):
     price = 0.0
     spacing = 1
@@ -34,10 +38,6 @@ def calculate_order_price(data):
     one_page_summary_pricing = 0.0
     plagiarism_report_pricing = 0.0
     apply_initial_draft = False
-
-    def initial_draft_pricing(apply, p):
-        """Apply 10% extra if initial draft is requested."""
-        return p * 0.1 if apply else 0.0
 
     # Calculate pages pricing: pages * priceBeforeExtraOptions
     if isinstance(data.get("pages"), (int, float)):
@@ -83,7 +83,7 @@ def calculate_order_price(data):
     )
 
     # Return price as a string rounded to 2 decimal places
-    return f"{price:.2f}"
+    return price
 
 def calculate_discount(order_id):
     discount = {
