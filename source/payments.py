@@ -83,6 +83,7 @@ def calculate_order_price(data):
     )
 
     # Return price as a string rounded to 2 decimal places
+    print(f"SHOW THE PRICE {price}")
     return price
 
 def calculate_discount(order_id):
