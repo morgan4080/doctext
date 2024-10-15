@@ -140,18 +140,26 @@ def calculate_order_amount(order_id, session_token):
     order_data=get_order(order_id, session_token)
     return order_data.get('totalPrice', 1)
 
-# Function to create an entry in the 'order_session' collection
 def create_order_session(order_id, session_token):
     try:
-        order_session = {
-            'order_id': order_id,
-            'session_token': session_token
-        }
-        result = order_session_collection.insert_one(order_session)
-        print(f"Order session created with ID: {result.inserted_id}")
-        return {'success': True, 'message': 'Order session created successfully'}
+        # Use the order_id as the _id for the document
+        filter_query = {'_id': order_id}
+        update_data = {'$set': {'session_token': session_token}}
+
+        # Upsert: Insert if not exists, update if it exists
+        result = order_session_collection.update_one(
+            filter_query, update_data, upsert=True
+        )
+
+        if result.upserted_id:
+            print(f"Created new session for Order ID: {result.upserted_id}")
+            return {'success': True, 'message': 'Order session created successfully'}
+        else:
+            print(f"Updated session token for Order ID: {order_id}")
+            return {'success': True, 'message': 'Order session updated successfully'}
+
     except Exception as e:
-        print(f"Error creating order session: {e}")
+        print(f"Error creating/updating order session: {e}")
         return {'success': False, 'message': str(e)}
 
 # Function to look up the session token by order_id
