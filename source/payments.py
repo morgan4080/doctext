@@ -24,6 +24,67 @@ def cents_to_dollars(cents):
         raise ValueError("Amount cannot be negative.")
     return round(cents / 100, 2)
 
+def calculate_order_price(data):
+    price = 0.0
+    spacing = 1
+    pages_pricing = 0.0
+    slides_pricing = 0.0
+    charts_pricing = 0.0
+    digital_copy_pricing = 0.0
+    one_page_summary_pricing = 0.0
+    plagiarism_report_pricing = 0.0
+    apply_initial_draft = False
+
+    def initial_draft_pricing(apply, p):
+        """Apply 10% extra if initial draft is requested."""
+        return p * 0.1 if apply else 0.0
+
+    # Calculate pages pricing: pages * priceBeforeExtraOptions
+    if isinstance(data.get("pages"), (int, float)):
+        pages_pricing = data.get("priceBeforeExtraOptions", 0) * data["pages"]
+
+    # Calculate slides pricing: 6.5 * slides
+    if isinstance(data.get("slides"), (int, float)):
+        slides_pricing = 6.5 * data["slides"]
+
+    # Calculate charts pricing: 5.0 * charts
+    if isinstance(data.get("charts"), (int, float)):
+        charts_pricing = 5.0 * data["charts"]
+
+    # Adjust spacing: 'single' = 2 * price, 'double' = 1 * price
+    if isinstance(data.get("spacing"), str):
+        spacing = 2 if data["spacing"] == "single" else 1
+
+    # Digital copies: +9.99 if true
+    if isinstance(data.get("digital_copies"), bool) and data["digital_copies"]:
+        digital_copy_pricing = 9.99
+
+    # Apply initial draft: set flag if true
+    if isinstance(data.get("initial_draft"), bool) and data["initial_draft"]:
+        apply_initial_draft = True
+
+    # One page summary: +17.99 if true
+    if isinstance(data.get("one_page_summary"), bool) and data["one_page_summary"]:
+        one_page_summary_pricing = 17.99
+
+    # Plagiarism report: +7.99 if true
+    if isinstance(data.get("plagiarism_report"), bool) and data["plagiarism_report"]:
+        plagiarism_report_pricing = 7.99
+
+    # Calculate total price
+    price = (
+        pages_pricing * spacing
+        + slides_pricing
+        + charts_pricing
+        + plagiarism_report_pricing
+        + one_page_summary_pricing
+        + digital_copy_pricing
+        + initial_draft_pricing(apply_initial_draft, pages_pricing)
+    )
+
+    # Return price as a string rounded to 2 decimal places
+    return f"{price:.2f}"
+
 def calculate_discount(order_id):
     discount = {
         "code": "N/A",

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
-from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars
+from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars, calculate_order_price
 
 load_dotenv()
 
@@ -28,14 +28,16 @@ def sitemap():
 @app.route('/checkout/complete/<order_id>')
 def checkout_complete(order_id):
     session_token = request.cookies.get('next-auth.session-token')
-    return render_template('complete.html', order=get_order(order_id, session_token), discount=calculate_discount(order_id))
+    order_data = get_order(order_id, session_token)
+    total_price = calculate_order_price(order_data)
+    return render_template('complete.html', order=order_data, total_price=total_price, discount=calculate_discount(order_id))
 
 @app.route('/checkout/<order_id>')
 def checkout_form(order_id):
     session_token = request.cookies.get('next-auth.session-token')
     order_data = get_order(order_id, session_token)
-    print(order_data)
-    return render_template('checkout_form.html', order=order_data, discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
+    total_price = calculate_order_price(order_data)
+    return render_template('checkout_form.html', order=order_data, total_price=total_price, discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
 
 @app.route('/docext/')
 def upload_form():
