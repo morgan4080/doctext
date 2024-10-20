@@ -11,6 +11,7 @@ MONGODB_URI = os.getenv('MONGODB_URI')
 client = MongoClient(MONGODB_URI)
 db = client['proctor'] 
 order_session_collection = db['order_session']
+discount_codes_collection = db['discount_codes']
 
 def dollars_to_cents(dollars):
     """Convert dollars to cents."""
@@ -24,11 +25,22 @@ def cents_to_dollars(cents):
         raise ValueError("Amount cannot be negative.")
     return round(cents / 100, 2)
 
-def calculate_discount(order_id):
-    discount = {
-        "code": "N/A",
-        "amount": 0.00
-    }
+def calculate_discount(session_token, order_id, discount_code = ''):
+    discount = discount_codes_collection.find_one({'code': discount_code})
+    order_data=get_order(order_id, session_token)
+    amount = order_data.get('totalPrice', 1)
+
+    if not discount:
+        discount = {
+            "code": "N/A",
+            "amount": 0.00
+        }
+    else:
+        discount = {
+            "code": discount_code,
+            "amount": amount * (discount['percent'] / 100)
+        }
+    
 
     return discount
 
@@ -148,9 +160,20 @@ def create_transaction(transaction_id, amount, username, user_id, currency, orde
     except requests.RequestException as e:
         print(f"Error while creating transaction {transaction_id}: {e}")
 
-def calculate_order_amount(order_id, session_token):
+def calculate_order_amount(order_id, session_token, code = ''):
     order_data=get_order(order_id, session_token)
-    return order_data.get('totalPrice', 1)
+    amount = order_data.get('totalPrice', 1)
+
+    discount = discount_codes_collection.find_one({'code': code})
+
+    if not discount:
+        return round(amount, 2)
+    else:
+        discount_amount = amount * (discount['percent'] / 100)
+        new_price = amount - discount_amount
+
+        return round(new_price, 2)
+    
 
 def create_order_session(order_id, session_token):
     try:
@@ -188,4 +211,11 @@ def get_session_token_by_order_id(order_id: str) -> str:
 
     except Exception as e:
         print(f"Error retrieving session token: {e}")
+        return str(e)  # Return None in case of error
+
+def create_discount(discount_data):
+    try:
+        discount_codes_collection.insert_one(discount_data)
+    except Exception as e:
+        print(f"Error creating discount: {e}")
         return str(e)  # Return None in case of error

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
-from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars
+from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars, create_discount
 
 load_dotenv()
 
@@ -29,14 +29,32 @@ def sitemap():
 def checkout_complete(order_id):
     session_token = request.cookies.get('next-auth.session-token')
     order_data = get_order(order_id, session_token)
-    return render_template('complete.html', order=order_data, discount=calculate_discount(order_id))
+    return render_template('complete.html', order=order_data, discount=calculate_discount(session_token, order_id))
+
+@app.route('/checkout/complete/<order_id>')
+def checkout_complete_discounted(order_id):
+    session_token = request.cookies.get('next-auth.session-token')
+    order_data = get_order(order_id, session_token)
+    return render_template('complete.html', order=order_data, discount=calculate_discount(session_token, order_id))
+
+@app.route('/checkout/complete/<order_id>/<discount_code>')
+def checkout_complete_discount(order_id, discount_code):
+    session_token = request.cookies.get('next-auth.session-token')
+    order_data = get_order(order_id, session_token)
+
+    return render_template('complete.html', order=order_data, discount=calculate_discount(session_token, order_id, discount_code))
 
 @app.route('/checkout/<order_id>')
 def checkout_form(order_id):
     session_token = request.cookies.get('next-auth.session-token')
     order_data = get_order(order_id, session_token)
-    print(get_session_token_by_order_id(order_id))
-    return render_template('checkout_form.html', order=order_data, discount=calculate_discount(order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
+    return render_template('checkout_form.html', order=order_data, discount=calculate_discount(session_token, order_id), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
+
+@app.route('/checkout/<order_id>/<discount_code>')
+def checkout_form_discounted(order_id, discount_code):
+    session_token = request.cookies.get('next-auth.session-token')
+    order_data = get_order(order_id, session_token)
+    return render_template('checkout_form.html', order=order_data, discount=calculate_discount(session_token, order_id, discount_code), publishable=os.getenv('PUBLISHABLE_KEY_STRP'), session_token=session_token)
 
 @app.route('/docext/')
 def upload_form():
@@ -95,7 +113,7 @@ def create_payment():
     try:
         session_token = request.cookies.get('next-auth.session-token')
         data = json.loads(request.data)
-        amount = calculate_order_amount(data["id"], session_token)
+        amount = calculate_order_amount(data["id"], session_token, data["discountCode"])
         amount_in_cents = dollars_to_cents(amount)
         create_order_session(data["id"], session_token)
         intent = stripe.PaymentIntent.create(
@@ -170,6 +188,26 @@ def stripe_webhook():
 
     # Respond to Stripe with a 200 status to acknowledge receipt
     return jsonify({'status': 'success'}), 200
+
+# Create a discount code with percentage
+@app.route('/tengeza/punguzo', methods=['POST'])
+def create_discount_code():
+    data = request.get_json()
+
+    # Validate request data
+    code = data.get('code')
+    percent = data.get('percent')
+
+    if not code or not isinstance(percent, (int, float)) or percent <= 0:
+        return jsonify({'error': 'Invalid code or percentage'}), 400
+
+    # Store the discount code in the database
+    discount_data = {'code': code, 'percent': percent}
+    try:
+        create_discount(discount_data)
+        return jsonify({'message': 'Discount code created successfully!'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -126,11 +126,11 @@
                 </div>
               </div>
       
-              <form class="mt-10">
+              <form id="mobile_form" class="mt-10">
                 <label for="discount-code-mobile" class="block text-sm font-medium text-gray-700">Discount code</label>
                 <div class="mt-1 flex space-x-4">
-                  <input disabled type="text" id="discount-code-mobile" name="discount-code-mobile" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                  <button disabled type="submit" class="rounded-md bg-gray-200 px-4 text-sm font-medium text-gray-600 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-50">Apply</button>
+                  <input type="text" id="discount-code-mobile" name="discountCode" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                  <button type="submit" class="rounded-md bg-gray-200 px-4 text-sm font-medium text-gray-600 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-50">Apply</button>
                 </div>
               </form>
       
@@ -142,7 +142,7 @@
                 <div class="flex justify-between">
                   <dt class="flex">
                     Discount
-                    <span class="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs tracking-wide text-gray-600">{{ discount.code }}</span>
+                    <span id="discount_span" class="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs tracking-wide text-gray-600">{{ discount.code }}</span>
                   </dt>
                   <dd class="text-gray-900">-${{ discount.amount }}</dd>
                 </div>
@@ -263,11 +263,11 @@
           </div>
       
           <div class="sticky bottom-0 flex-none border-t border-gray-200 bg-gray-50 p-6">
-            <form>
-              <label for="discount-code" class="block text-sm font-medium text-gray-700">Discount code</label>
+            <form id="laptop_form" >
+              <label for="discount_code" class="block text-sm font-medium text-gray-700">Discount code</label>
               <div class="mt-1 flex space-x-4">
-                <input disabled type="text" id="discount-code" name="discount-code" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                <button disabled type="submit" class="rounded-md bg-gray-200 px-4 text-sm font-medium text-gray-600 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-50">Apply</button>
+                <input type="text" id="discount_code" name="discountCode" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+                <button type="submit" class="rounded-md bg-gray-200 px-4 text-sm font-medium text-gray-600 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-50">Apply</button>
               </div>
             </form>
       
@@ -279,7 +279,7 @@
               <div class="flex justify-between">
                 <dt class="flex">
                   Discount
-                  <span class="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs tracking-wide text-gray-600">{{ discount.code }}</span>
+                  <span id="discount_span" class="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs tracking-wide text-gray-600">{{ discount.code }}</span>
                 </dt>
                 <dd class="text-gray-900">-${{ discount.amount }}</dd>
               </div>
@@ -426,13 +426,18 @@
           .querySelector("#payment-form")
           .addEventListener("submit", handleSubmit);
 
+          const discount_span = document.getElementById('discount_span');
+
           // Fetches a payment intent and captures the client secret
           async function initialize() {
             const response = await fetch("/create-payment-intent", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: 'include',
-                body: JSON.stringify({ id: document.getElementById("orderId").innerText }),
+                body: JSON.stringify({ 
+                  id: document.getElementById("orderId").innerText,
+                  discountCode: discount_span.innerText
+                }),
             });
             const { clientSecret } = await response.json();
 
@@ -460,7 +465,9 @@
                 elements,
                 confirmParams: {
                     // Make sure to change this to your payment completion page
-                    return_url: "https://proctorowls.com/checkout/complete/" + document.getElementById("orderId").innerText,
+                    return_url: discount_span.innerText == "N/A" ?
+                     `${window.location.origin}/checkout/complete/${document.getElementById("orderId").innerText}` 
+                     : `${window.location.origin}/checkout/complete/${document.getElementById("orderId").innerText}/${discount_span.innerText}`,
                 },
             });
 
@@ -510,7 +517,21 @@
           //   document.querySelector("#dpm-integration-checker").href = url;
           // }
         }
+
+        document.getElementById("mobile_form").addEventListener("submit", e => apply_discount(e));
+        document.getElementById("laptop_form").addEventListener("submit", e => apply_discount(e));
       }
+
+      async function apply_discount(event) {
+        event.preventDefault(); // Prevent form submission
+        const formData = new FormData(event.target); // Get form data
+      
+        const discountCode = formData.get('discountCode'); // Extract discount code
+        const orderId = document.getElementById("orderId").innerText; // Get order ID
+      
+        location.href = `${orderId}/${discountCode}`
+      }
+      
     </script>
   {% endif %}
 </body>
