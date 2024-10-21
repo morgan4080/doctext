@@ -152,7 +152,7 @@
                     
                     <div class="flex justify-between">
                       <dt class="font-medium text-gray-900">Total</dt>
-                      <dd class="text-gray-900">${{ order.totalPrice - discount.amount }}</dd>
+                      <dd class="text-gray-900">${{ round(order.totalPrice - discount.amount, 2) }}</dd>
                     </div>
                   </dl>
                 </div>
