@@ -151,7 +151,7 @@
       
             <p class="mt-6 flex items-center justify-between border-t border-gray-200 pt-6 text-sm font-medium text-gray-900">
               <span class="text-base">Total</span>
-              <span class="text-base">${{ round(order.totalPrice - discount.amount, 2) }}</span>
+              <span class="text-base">${{ order.totalPrice - discount.amount|round(2) }}</span>
             </p>
           </div>
         </section>
@@ -285,7 +285,7 @@
               </div>
               <div class="flex items-center justify-between border-t border-gray-200 pt-6 text-gray-900">
                 <dt>Total</dt>
-                <dd class="text-base">${{ round(order.totalPrice - discount.amount, 2) }}</dd>
+                <dd class="text-base">${{ order.totalPrice - discount.amount|round(2) }}</dd>
               </div>
             </dl>
           </div>
