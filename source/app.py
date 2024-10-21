@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config.config import Config
 from source.file_handlers import save_file
 from source.extractors import extract_text_from_docx, extract_content_from_pptx
-from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars, create_discount
+from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars, create_discount, update_order_amount
 
 load_dotenv()
 
@@ -162,8 +162,6 @@ def stripe_webhook():
         order_id = data['metadata'].get('orderId')
         session_token = get_session_token_by_order_id(order_id)
 
-        print(f"Metadata Order ID: {order_id}, Session Token: {session_token}")
-
         session_data = get_user(session_token)
 
         if 'error' in session_data and session_data['error'] is not None:
@@ -174,11 +172,11 @@ def stripe_webhook():
             username = user.get('name')
             user_id = user.get('_id')
 
-            print({'transactionid': data['id'], 'amount': cents_to_dollars(data['amount']), 'username': username, 'userid': user_id, 'currency': data['currency'], 'orderid': order_id})
-
             update_payment_status(order_id, session_token)
 
             create_transaction(data['id'], cents_to_dollars(data['amount']), username, user_id, data['currency'], order_id, session_token)
+
+            update_order_amount(order_id, cents_to_dollars(data['amount']))
     
     elif event_type == 'payment_intent.payment_failed':
         print(f"Payment for {data['amount']} failed.")

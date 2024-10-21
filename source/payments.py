@@ -1,3 +1,4 @@
+from bson import ObjectId
 import requests
 import os
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ MONGODB_URI = os.getenv('MONGODB_URI')
 
 client = MongoClient(MONGODB_URI)
 db = client['proctor'] 
+order_collection = db['orders']
 order_session_collection = db['order_session']
 discount_codes_collection = db['discount_codes']
 
@@ -173,6 +175,28 @@ def calculate_order_amount(order_id, session_token, code = ''):
         new_price = amount - discount_amount
 
         return round(new_price, 2)
+    
+def update_order_amount(order_id, amount):
+
+    try:
+        # Use the order_id as the _id for the document
+        filter_query = {'_id': ObjectId(order_id)}
+
+        update_data = {'$set': {'totalPrice': amount}}
+
+        # update order
+
+        # Upsert: Insert if not exists, update if it exists
+        order_collection.update_one(
+            filter_query, update_data, upsert=True
+        )
+
+        print(f"Updated order total price for Order ID: {order_id}")
+        return {'success': True, 'message': 'Order price updated successfully'}
+
+    except Exception as e:
+        print(f"Error creating/updating order session: {e}")
+        return {'success': False, 'message': str(e)}
     
 
 def create_order_session(order_id, session_token):
