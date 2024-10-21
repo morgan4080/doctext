@@ -426,10 +426,11 @@
           .querySelector("#payment-form")
           .addEventListener("submit", handleSubmit);
 
-          const discount_span = document.getElementById('discount_span');
+          
 
           // Fetches a payment intent and captures the client secret
           async function initialize() {
+            const discount_span = document.getElementById('discount_span');
             const response = await fetch("/create-payment-intent", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -460,6 +461,7 @@
           async function handleSubmit(e) {
             e.preventDefault();
             setLoading(true);
+            const discount_span = document.getElementById('discount_span');
 
             const { error } = await stripe.confirmPayment({
                 elements,
