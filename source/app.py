@@ -5,8 +5,8 @@ import json
 from flask import Flask, render_template, request, redirect, flash, send_from_directory, url_for, jsonify
 from dotenv import load_dotenv
 from config.config import Config
-from source.file_handlers import save_file
-from source.extractors import extract_text_from_docx, extract_content_from_pptx
+from source.file_handlers import save_file, delete_all_files_in_uploads
+from source.extractors import extract_text_from_docx, extract_content_from_pptx, extract_content_from_pdf
 from source.payments import calculate_discount, get_order, calculate_order_amount, get_user, update_payment_status, create_transaction, create_order_session, get_session_token_by_order_id, dollars_to_cents, cents_to_dollars, create_discount, update_order_amount
 
 load_dotenv()
@@ -77,6 +77,12 @@ def upload_files():
     
     return redirect(url_for('list_uploaded_files'))
 
+@app.route('/docext/cleanup', methods=['POST'])
+def cleanup_files():
+    result = delete_all_files_in_uploads()
+    print(f"Clean Up Complete {result}")
+    return redirect(url_for('upload_form'))
+
 @app.route('/docext/uploads')
 def list_uploaded_files():
     try:
@@ -93,6 +99,9 @@ def list_uploaded_files():
                     data = extract_text_from_docx(file_path)
                 elif file.endswith('.pptx'):
                     data = extract_content_from_pptx(file_path)
+                elif file.endswith('.pdf'):
+                    print("Extracting PDF")
+                    data = extract_content_from_pdf(file_path)
                 else:
                     data = "Unsupported file type"
 

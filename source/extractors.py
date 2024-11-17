@@ -1,6 +1,7 @@
 from pptx import Presentation
 from docx import Document
 import os
+import fitz # PyMuPDF
 
 # Extract headlines and paragraphs from DOCX file
 def extract_text_from_docx(file_path):
@@ -36,6 +37,33 @@ def extract_content_from_pptx(file_path):
                     img_file.write(image_bytes)
                     images.append(image_path)
 
+    return {'headlines': headlines, 'paragraphs': paragraphs, 'images': images}
+
+def extract_content_from_pdf(file_path):
+    doc = fitz.open(file_path)
+    paragraphs, images = [], []
+
+    for page_idx, page in enumerate(doc):
+        # Extract text
+        text = page.get_text("text").strip()
+        if text:
+            paragraphs.append(text)
+        
+        # Extract images
+        for img_idx, img in enumerate(page.get_images(full=True)):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]  # Image extension
+            
+            # Create image path to save
+            image_path = os.path.join(os.getcwd(), 'static', 'uploads', f'pdf_page{page_idx}_img{img_idx}.{image_ext}')
+            
+            # Write image data to file
+            with open(image_path, 'wb') as img_file:
+                img_file.write(image_bytes)
+                images.append(image_path)
+    
     return {'headlines': paragraphs, 'paragraphs': paragraphs, 'images': images}
 
 # More extractors can be added here (e.g., for DOC format using third-party libraries)

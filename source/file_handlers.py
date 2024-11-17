@@ -12,3 +12,19 @@ def save_file(file):
         file.save(file_path)
         return file_path
     return None
+
+# Delete all files in the uploads folder
+def delete_all_files_in_uploads():
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    
+    if not os.path.exists(upload_folder):
+        return "Upload folder does not exist."
+
+    try:
+        for filename in os.listdir(upload_folder):
+            file_path = os.path.join(upload_folder, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        return "All files in the uploads folder have been deleted."
+    except Exception as e:
+        return f"An error occurred while deleting files: {e}"
