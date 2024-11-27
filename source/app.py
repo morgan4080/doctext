@@ -2,6 +2,7 @@ import os
 import datetime
 import stripe
 import json
+from werkzeug.exceptions import RequestEntityTooLarge
 from flask import Flask, render_template, request, redirect, flash, send_from_directory, url_for, jsonify
 from dotenv import load_dotenv
 from config.config import Config
@@ -16,6 +17,10 @@ app.config.from_object(Config)
 
 stripe.api_key = os.getenv('SECRET_KEY_STRP')
 WEBHOOK_SCRT = os.getenv('STRP_WEBHOOK_SCRT')
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_request_entity_too_large(error):
+    return jsonify({"error": "The uploaded file is too large!"}), 413
 
 @app.route('/robots.txt')
 def robots():
@@ -96,8 +101,10 @@ def list_uploaded_files():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file)
             if os.path.isfile(file_path):
                 if file.endswith('.docx'):
+                    print("Extracting DOCX")
                     data = extract_text_from_docx(file_path)
                 elif file.endswith('.pptx'):
+                    print("Extracting PPTX")
                     data = extract_content_from_pptx(file_path)
                 elif file.endswith('.pdf'):
                     print("Extracting PDF")
